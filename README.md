@@ -1,4 +1,4 @@
-# Student Grade Tracker
+# Student Grade Calculator
 
 A JavaFX application for calculating student grades based on assignment types, grades, and weightages. This application provides an intuitive GUI for entering assignment details and automatically calculates the final grade with proper validation.
 
@@ -16,24 +16,28 @@ A JavaFX application for calculating student grades based on assignment types, g
 ## Prerequisites
 
 - **Java 23** or higher
-- **Gradle** (included via Gradle Wrapper)
-- **JavaFX 23** (automatically downloaded by Gradle)
+- **VS Code** with Extension Pack for Java
+- **Gradle** (can be installed via Homebrew: `brew install gradle`)
+- **JavaFX 23 SDK** (download from [OpenJFX](https://openjfx.io/))
+  - Extract to a directory like `/path/to/javafx-sdk-23.x.x/`
+  - Note the `lib` folder path for runtime configuration
 
 ## Project Structure
 
 ```
-AgarwalRohit/
+student-grade-calculator/
 ├── src/
 │   └── main/
 │       └── java/
 │           ├── module-info.java                 # Java module configuration
 │           └── com/
 │               └── agarwalrohit/
-│                   └── AgarwalRohitA7.java      # Main application class
+│                   └── StudentGradeCalculator.java  # Main application class
 ├── gradle/
 │   └── wrapper/                                 # Gradle wrapper files
 ├── build.gradle                                 # Build configuration
 ├── settings.gradle                              # Gradle project settings
+├── .gitignore                                   # Git ignore file
 ├── gradlew                                      # Gradle wrapper (Unix)
 ├── gradlew.bat                                  # Gradle wrapper (Windows)
 └── README.md                                    # This file
@@ -41,7 +45,17 @@ AgarwalRohit/
 
 ## How to Run
 
-### Method 1: Using Gradle (Recommended)
+### Method 1: Using VS Code (Recommended for Development)
+
+1. **Install the Extension Pack for Java** if not already installed
+2. **Open the project folder** in VS Code
+3. **Navigate to** `src/main/java/com/agarwalrohit/StudentGradeCalculator.java`
+4. **Click the "Run" button** that appears above the `main` method
+5. **Or use Command Palette** (`Cmd+Shift+P` / `Ctrl+Shift+P`) → "Java: Run"
+
+*Note: VS Code with the Java Extension Pack automatically handles JavaFX dependencies and module configuration.*
+
+### Method 2: Using Gradle (Requires proper JavaFX setup)
 
 1. **Clone or navigate to the project directory:**
    ```bash
@@ -49,33 +63,86 @@ AgarwalRohit/
    cd student-grade-calculator
    ```
 
-2. **Run the application:**
+2. **Build the project:**
    ```bash
-   ./gradlew run
-   ```
-   
-   On Windows:
-   ```cmd
-   gradlew.bat run
+   gradle clean build
    ```
 
-### Method 2: Using IntelliJ IDEA
+3. **Run the application (if Gradle JavaFX plugin works):**
+   ```bash
+   gradle run
+   ```
 
-1. **Open the project in IntelliJ IDEA**
-2. **Navigate to** `src/main/java/com/agarwalrohit/AgarwalRohitA7.java`
-3. **Right-click on the file** and select "Run 'AgarwalRohitA7.main()'"
-4. **Or click the green play button** next to the `main` method
+### Method 3: Direct Java Execution (Recommended for Reliable Execution)
 
-### Method 3: Building and Running JAR
+1. **Build the project first:**
+   ```bash
+   cd /path/to/student-grade-calculator
+   gradle clean build
+   ```
+
+2. **Run with explicit JavaFX module configuration:**
+   ```bash
+   java --module-path /path/to/javafx-sdk-23.x.x/lib \
+        --add-modules javafx.controls,javafx.fxml \
+        --add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED \
+        -cp "build/classes/java/main" \
+        com.agarwalrohit.StudentGradeCalculator
+   ```
+
+   **Example on macOS (adjust paths for your system):**
+   ```bash
+   java --module-path /Users/username/Library/Java/JavaVirtualMachines/javafx-sdk-23.0.2/lib \
+        --add-modules javafx.controls,javafx.fxml \
+        --add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED \
+        -cp "build/classes/java/main" \
+        com.agarwalrohit.StudentGradeCalculator
+   ```
+
+### Method 4: Building and Running JAR (Advanced)
 
 1. **Build the project:**
    ```bash
-   ./gradlew build
+   gradle build
    ```
 
 2. **Run with JavaFX modules:**
    ```bash
-   java --module-path /path/to/javafx/lib --add-modules javafx.controls -cp build/libs/AgarwalRohit-1.0-SNAPSHOT.jar com.agarwalrohit.AgarwalRohitA7
+   java --module-path /path/to/javafx-sdk-23.x.x/lib \
+        --add-modules javafx.controls \
+        -cp build/libs/student-grade-calculator-1.0-SNAPSHOT.jar \
+        com.agarwalrohit.StudentGradeCalculator
+   ```
+
+## Setup Instructions
+
+### Step-by-Step Setup
+
+1. **Install Java 23:**
+   - Download from [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) or [OpenJDK](https://openjdk.org/)
+   - Verify installation: `java --version`
+
+2. **Install Gradle:**
+   - **macOS:** `brew install gradle`
+   - **Windows:** Download from [Gradle.org](https://gradle.org/install/)
+   - **Linux:** Use package manager or download binary
+   - Verify installation: `gradle --version`
+
+3. **Download JavaFX SDK:**
+   - Visit [OpenJFX Downloads](https://openjfx.io/)
+   - Download JavaFX 23 SDK for your platform
+   - Extract to a permanent location (e.g., `/Users/username/Library/Java/JavaVirtualMachines/javafx-sdk-23.x.x/`)
+   - Note the path to the `lib` folder
+
+4. **Install VS Code Extensions:**
+   - Install "Extension Pack for Java" from VS Code marketplace
+   - This includes Language Support, Debugger, Test Runner, Maven, and Project Manager for Java
+
+5. **Clone and Build Project:**
+   ```bash
+   git clone https://github.com/rohitrajagarwal/student-grade-calculator.git
+   cd student-grade-calculator
+   gradle clean build
    ```
 
 ## Usage Instructions
@@ -127,15 +194,26 @@ AgarwalRohit/
 
 1. **JavaFX Runtime Error:**
    - Ensure you're using Java 23 or higher with JavaFX support
-   - The Gradle build automatically handles JavaFX dependencies
+   - Download JavaFX SDK separately from [OpenJFX](https://openjfx.io/)
+   - Use Method 3 (Direct Java Execution) for most reliable results
 
 2. **Window doesn't appear:**
    - Check if the application is running in the background
-   - Try running from command line to see any error messages
+   - Try running from VS Code's integrated terminal to see any error messages
+   - Ensure JavaFX SDK path is correct in the command
 
 3. **Build fails:**
    - Ensure Java 23 is installed: `java --version`
-   - Clean and rebuild: `./gradlew clean build`
+   - Clean and rebuild: `gradle clean build`
+   - Check that JAVA_HOME is set correctly
+
+4. **Module path issues:**
+   - Verify JavaFX SDK is downloaded and extracted properly
+   - Update the `--module-path` to point to your JavaFX `lib` directory
+   - Example paths:
+     - **macOS:** `/Users/username/Library/Java/JavaVirtualMachines/javafx-sdk-23.x.x/lib`
+     - **Windows:** `C:\Program Files\Java\javafx-sdk-23.x.x\lib`
+     - **Linux:** `/usr/local/javafx-sdk-23.x.x/lib`
 
 ### System Requirements
 
@@ -155,13 +233,17 @@ git clone https://github.com/rohitrajagarwal/student-grade-calculator.git
 cd student-grade-calculator
 
 # Build the project
-./gradlew build
+gradle build
 
 # Run tests
-./gradlew test
+gradle test
 
-# Run the application
-./gradlew run
+# Run the application (Method 3 - most reliable)
+java --module-path /path/to/javafx-sdk-23.x.x/lib \
+     --add-modules javafx.controls,javafx.fxml \
+     --add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED \
+     -cp "build/classes/java/main" \
+     com.agarwalrohit.StudentGradeCalculator
 ```
 
 ### Dependencies

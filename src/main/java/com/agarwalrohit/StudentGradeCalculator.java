@@ -17,13 +17,22 @@ package com.agarwalrohit;
  *
  *  Source 2: IntelliJ IDE's feature: https://www.jetbrains.com/help/idea/full-line-code-completion.html
  *  Source 3: IntelliJ IDE's feature: https://www.jetbrains.com/help/idea/class-diagram.html
+ * 
+ * Student Grade Calculator - A JavaFX application for calculating weighted grades
+ * 
+ * Features:
+ * - Real-time input validation with visual feedback
+ * - Weighted grade calculation
+ * - Support for up to 5 assignments
+ * - Letter grade conversion
+ * 
+ * @author Rohit Agarwal
+ * @version 1.0.0
  */
 
 
 
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -39,306 +48,414 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class StudentGradeCalculator extends Application {
+    
+    // Constants for better maintainability
+    private static final int MAX_ASSIGNMENTS = 5;
+    private static final int COLUMNS = 3;
+    private static final int WINDOW_WIDTH = 500;
+    private static final int WINDOW_HEIGHT = 500;
+    private static final int COLUMN_WIDTH = 150;
+    private static final int MIN_FIELD_WIDTH = 140;
+    private static final double PERFECT_WEIGHTAGE = 100.0;
+    
+    // Color constants for validation feedback
+    private static final Color NEUTRAL_BORDER = Color.rgb(187, 187, 187);
+    private static final Color VALID_BORDER = Color.rgb(174, 255, 193);
+    private static final Color INVALID_BORDER = Color.rgb(240, 100, 92);
+    
+    // Validation patterns
+    private static final String ASSIGNMENT_PATTERN = "[a-zA-Z ]+";
+    private static final String NUMERIC_PATTERN = "[0-9]*(\\.?[0-9]+)?";
+    
+    // UI Components
+    private TextField[][] textFields;
+    private Label resultsLabel;
+    
     @Override
     public void start(Stage stage) throws IOException {
-        GridPane root = new GridPane();
-        Scene scene = new Scene(root, 500, 500);
-
-        //set stage settings
-        stage.setTitle("Student Grade Tracker");
-        stage.setMinWidth(500);
-        stage.setMinHeight(500);
+        stage.setTitle("Student Grade Calculator");
+        stage.setMinWidth(WINDOW_WIDTH);
+        stage.setMinHeight(WINDOW_HEIGHT);
         stage.setResizable(true);
-
-        // Add padding, columns widths, and center alignment to gridPane contents.
-        root.getColumnConstraints().addAll( new ColumnConstraints( 150 ), new ColumnConstraints( 150 ),new ColumnConstraints( 150 ));
-        root.setHgap(10);
-        root.setVgap(10);
-        root.setPadding(new Insets(20,5,5,5));
-        root.setAlignment(Pos.TOP_CENTER);
-        root.setMinWidth(490);
-
-        //Labels: creating 3 labels for all 3 columns defined in the GridPane and set it to center alignment
-        Label assignment = new Label("Assignment Type");
-        assignment.setPadding(new Insets(5,5,5,5));
-        Label grade = new Label("Grade");
-        grade.setPadding(new Insets(5,5,5,5));
-        Label weightage = new Label("Weightage");
-        weightage.setPadding(new Insets(5,5,5,5));
-        Label results = new Label("");
-        results.setPadding(new Insets(5,5,5,5));
-        Label helpText = new Label("Note: \n" +
-                "1. For Assignment Type please enter values with consists of only a-z and/or A-z. No symbols or numeric values are accepted.\n\n" +
-                "2. For Grade and Weightage please enter a double value. Negatives numbers are not accepted.\n\n" +
-                "3. For Weightage please ensure the total weightage is summing up to 100%.");
-        helpText.setPadding(new Insets(5,5,5,5));
-        helpText.setWrapText(true);
-        helpText.setTextAlignment(TextAlignment.JUSTIFY);
-        // alignment of labels within each grid
-        GridPane.setHalignment(assignment, HPos.CENTER);
-        GridPane.setHalignment(grade, HPos.CENTER);
-        GridPane.setHalignment(weightage, HPos.CENTER);
-        GridPane.setHalignment(results, HPos.LEFT);
-
-        //create text fields in a grid format.
-        TextField[][] textFields = new TextField[3][5];
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 5; j++) {
-                textFields[i][j] = new TextField();
-                textFields[i][j].setPrefWidth(100);
-                textFields[i][j].setMinWidth(140);
-                textFields[i][j].setPromptText(getTextFieldPromptText(i,j));
-                textFields[i][j].setId(getTextFieldIDString(i,j));
-
-            }
-        }
-
-        // create calculate and clear buttons
-        Button calculate = new Button("Calculate");
-        calculate.setPadding(new Insets(5,5,5,5));
-        Button clear = new Button("Clear");
-        clear.setPadding(new Insets(5,5,5,5));
-
-        //add help text to the root:
-        root.add(helpText, 0, 0, 3, 7);
-        // add labels at the top of each column in grid to improve readability.
-        root.add(assignment, 0, 8);
-        root.add(grade, 1, 8);
-        root.add(weightage, 2, 8);
-
-        // add all text fields to the grid pane. i = column, j = row
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 5; j++) {
-                root.add(textFields[i][j], i, j+9);
-            }
-        }
-        //add buttons 1 row (i.e., row 8) after all the fields just to provide additional default padding from the last set of textFields
-        root.add(calculate, 0, 14);
-        root.add(clear, 1, 14);
-
-        // add results Label
-        root.add(results, 0, 16 , 3, 1);
-
-
-
-        //set up event handlers for text fields
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 5; j++) {
-                final int col = i;
-                final int row = j;
-
-                textFields[i][j].focusedProperty().addListener((observable, oldValue, newValue) -> {
-                    if(!newValue){
-                        textFields[col][row].setBorder(new Border(new BorderStroke(Color.rgb(187, 187, 187),
-                                BorderStrokeStyle.SOLID, new CornerRadii(2), BorderWidths.DEFAULT)));
-                    }
-                });
-
-                textFields[i][j].focusedProperty().addListener((observable, oldValue, newValue) -> {
-                    if(!newValue){
-                        if(textFields[col][row].getId().equals(getTextFieldIDString(col,row)) && textFields[col][row].getId().contains("assignment")) {
-                            if(!textFields[col][row].getText().isEmpty()) {
-                                if (!textFields[col][row].getText().matches("[a-zA-Z ]+")) {
-                                    textFields[col][row].setBorder(new Border(new BorderStroke(Color.rgb(240, 100, 92),
-                                            BorderStrokeStyle.SOLID, new CornerRadii(2), BorderWidths.DEFAULT)));
-                                    textFields[col][row].setText("");
-                                } else {
-                                    textFields[col][row].setBorder(new Border(new BorderStroke(Color.rgb(174, 255, 193),
-                                            BorderStrokeStyle.SOLID, new CornerRadii(2), BorderWidths.DEFAULT)));
-                                }
-                            }else{
-                                textFields[col][row].setBorder(new Border(new BorderStroke(Color.rgb(187, 187, 187),
-                                        BorderStrokeStyle.SOLID, new CornerRadii(2), BorderWidths.DEFAULT)));
-
-                            }
-                        }else if(textFields[col][row].getId().equals(getTextFieldIDString(col,row)) &&
-                                (textFields[col][row].getId().contains("grade") || textFields[col][row].getId().contains("weightage"))) {
-                            if(!textFields[col][row].getText().isEmpty()) {
-                                if (!textFields[col][row].getText().matches("[0-9]*(\\.?[0-9]+)?")) {
-                                    textFields[col][row].setBorder(new Border(new BorderStroke(Color.rgb(240, 100, 92),
-                                            BorderStrokeStyle.SOLID, new CornerRadii(2), BorderWidths.DEFAULT)));
-                                    textFields[col][row].setText("");
-                                } else {
-                                    textFields[col][row].setBorder(new Border(new BorderStroke(Color.rgb(174, 255, 193),
-                                            BorderStrokeStyle.SOLID, new CornerRadii(2), BorderWidths.DEFAULT)));
-                                }
-                            }else{
-                                textFields[col][row].setBorder(new Border(new BorderStroke(Color.rgb(187, 187, 187),
-                                        BorderStrokeStyle.SOLID, new CornerRadii(2), BorderWidths.DEFAULT)));
-
-
-                            }
-                            int tWeightage = checkTotalWeightage(textFields);
-                            switch(tWeightage){
-                                case 1: //when total weightage is 100%
-                                    results.setText("Please enter details to calculate");
-                                    results.setTextFill(Color.BLACK);
-                                    break;
-                                case 2: //when total weightage is < 100%
-                                    boolean isAnyWeightageEmpty = false;
-                                    for(int b = 0; b < 5; b++) {
-                                        if( !textFields[0][b].getText().isEmpty()  // check if assignment is empty.
-                                                && textFields[2][b].getText().isEmpty()){// check if the corresponding weightage is empty
-                                            isAnyWeightageEmpty = true;
-                                            break;
-                                        }
-                                    }
-                                    if(textFields[0][0].getText().isEmpty()
-                                    && textFields[0][1].getText().isEmpty()
-                                    && textFields[0][2].getText().isEmpty()
-                                    && textFields[0][3].getText().isEmpty()
-                                        && textFields[0][4].getText().isEmpty()) {
-                                        isAnyWeightageEmpty = true;
-                                    }
-
-                                    if(isAnyWeightageEmpty){
-                                        results.setText("Please enter details to calculate");
-                                        results.setTextFill(Color.BLACK);
-                                    }else{
-                                        results.setText("Weightage does not add up to 100%. Please check.");
-                                        results.setTextFill(Color.RED);
-
-                                    }
-                                    break;
-                                case 3: //when total weightage is > 100%
-                                    results.setText("Weightage exceeds 100%. Please check.");
-                                    results.setTextFill(Color.RED);
-                                    break;
-
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        // create event handler for buttons
-        clear.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 5; j++) {
-                        textFields[i][j].setText("");
-                        textFields[i][j].setBorder(new Border(new BorderStroke(Color.rgb(187,187, 187),
-                                BorderStrokeStyle.SOLID, new CornerRadii(2), BorderWidths.DEFAULT)));
-                    }
-                }
-                results.setText("Please enter details to calculate");
-            }
-        });
-
-        calculate.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                boolean[] flags = new boolean[5];
-                boolean readyToCalculate = true;
-                double totalScore = -1;
-                for (int j = 0; j < 5; j++) {
-                    //checking if assignment field is empty.
-                    if(textFields[0][j].getId().contains("assignment") && textFields[0][j].getText().isEmpty()){
-                        flags[j] = false; // assignment input field is empty. therefore, ignore weightage
-                    }else{
-                        flags[j] = true;
-                    }
-                    // if assignment field is found to be not empty, check if the grade or weightage column is empty.
-                    // if either of them is empty, we are not ready to  calculate. otherwise, continue to assume we are ready for calculation.
-                    if(flags[j] && (textFields[1][j].getText().isEmpty()  || textFields[2][j].getText().isEmpty())){
-                        readyToCalculate = false;
-                    }
-                }
-                if(textFields[0][0].getText().isEmpty()
-                && textFields[0][1].getText().isEmpty()
-                    && textFields[0][2].getText().isEmpty()
-                    && textFields[0][3].getText().isEmpty()
-                    && textFields[0][4].getText().isEmpty()) {
-                    readyToCalculate = false;
-                }
-                // if ready to calculate impiles: all values in assignment columns has a corresponding weightage values in the weightage column.
-                // not checking for grade values.
-                if(readyToCalculate && checkTotalWeightage(textFields) == 1){
-
-                    for(int j = 0; j < 5; j++) {
-                        if(textFields[0][j].getId().contains("assignment") && !textFields[0][j].getText().isEmpty()){
-                            if(totalScore == -1){
-                                totalScore = 0;
-                            }
-                            totalScore += Double.parseDouble(textFields[1][j].getText()) * Double.parseDouble(textFields[2][j].getText())/100.0;
-                        }
-                    }
-                }else{
-                    results.setText("Not ready to calculate. Please check inputs values.");
-                }
-                if( readyToCalculate && totalScore >= 0){
-                    results.setText("Student's Grade is: "+getGrade(totalScore));
-                }else if(readyToCalculate && totalScore == -1){
-                    results.setText("Please complete details to calculate");
-                }else{
-                    results.setText("Please enter details to calculate");
-                }
-            }
-        });
+        
+        GridPane root = createMainLayout();
+        Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+        
         stage.setScene(scene);
         stage.show();
     }
-
-    private String getGrade(double tScore){
-
-        if(tScore > 95){ //96-100
-            return "A";
-        }else if(tScore >= 90){ // 90-95
-            return "A-";
-        }else if(tScore >= 85){ // 85-89
-            return "B";
-        }else if(tScore >= 80){ //80-84
-            return "B-";
-        }else if(tScore >= 75){ //75-79
-            return "C";
-        }else if(tScore >= 70){ //70-74
-            return "C-";
-        }else if(tScore >= 60){ //60-69
-            return "D";
-        }else{ // <60
-            return "F";
+    
+    /**
+     * Creates the main layout with all UI components
+     */
+    private GridPane createMainLayout() {
+        GridPane root = new GridPane();
+        setupGridPane(root);
+        
+        // Initialize components
+        textFields = new TextField[COLUMNS][MAX_ASSIGNMENTS];
+        resultsLabel = new Label("Please enter details to calculate");
+        
+        // Add components to layout
+        addHelpText(root);
+        addColumnHeaders(root);
+        addTextFields(root);
+        addButtons(root);
+        addResultsLabel(root);
+        
+        return root;
+    }
+    
+    /**
+     * Configures the main GridPane layout properties
+     */
+    private void setupGridPane(GridPane root) {
+        root.getColumnConstraints().addAll(
+            new ColumnConstraints(COLUMN_WIDTH),
+            new ColumnConstraints(COLUMN_WIDTH), 
+            new ColumnConstraints(COLUMN_WIDTH)
+        );
+        root.setHgap(10);
+        root.setVgap(10);
+        root.setPadding(new Insets(20, 5, 5, 5));
+        root.setAlignment(Pos.TOP_CENTER);
+        root.setMinWidth(490);
+    }
+    
+    /**
+     * Adds help text to the layout
+     */
+    private void addHelpText(GridPane root) {
+        Label helpText = new Label(
+            "Instructions:\n" +
+            "1. Assignment Type: Enter alphabetic characters only (a-z, A-Z, spaces allowed)\n" +
+            "2. Grade: Enter numeric values (decimals allowed, no negatives)\n" +
+            "3. Weightage: Enter percentage values that total exactly 100%"
+        );
+        helpText.setPadding(new Insets(5));
+        helpText.setWrapText(true);
+        helpText.setTextAlignment(TextAlignment.JUSTIFY);
+        
+        root.add(helpText, 0, 0, COLUMNS, 7);
+    }
+    
+    /**
+     * Adds column headers to the layout
+     */
+    private void addColumnHeaders(GridPane root) {
+        String[] headers = {"Assignment Type", "Grade", "Weightage"};
+        HPos[] alignments = {HPos.CENTER, HPos.CENTER, HPos.CENTER};
+        
+        for (int i = 0; i < headers.length; i++) {
+            Label header = createLabel(headers[i]);
+            GridPane.setHalignment(header, alignments[i]);
+            root.add(header, i, 8);
         }
     }
+    
+    /**
+     * Creates and adds text fields to the layout
+     */
+    private void addTextFields(GridPane root) {
+        for (int col = 0; col < COLUMNS; col++) {
+            for (int row = 0; row < MAX_ASSIGNMENTS; row++) {
+                TextField field = createTextField(col, row);
+                textFields[col][row] = field;
+                root.add(field, col, row + 9);
+            }
+        }
+    }
+    
+    /**
+     * Creates a configured text field
+     */
+    private TextField createTextField(int col, int row) {
+        TextField field = new TextField();
+        field.setPrefWidth(100);
+        field.setMinWidth(MIN_FIELD_WIDTH);
+        field.setPromptText(getPromptText(col, row));
+        field.setId(getFieldId(col, row));
+        field.setBorder(createBorder(NEUTRAL_BORDER));
+        
+        // Add validation listener
+        setupFieldValidation(field, col, row);
+        
+        return field;
+    }
+    
+    /**
+     * Sets up validation for a text field
+     */
+    private void setupFieldValidation(TextField field, int col, int row) {
+        field.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) { // Lost focus
+                validateField(field, col, row);
+            }
+        });
+    }
+    
+    /**
+     * Validates a single field and updates its appearance
+     */
+    private void validateField(TextField field, int col, int row) {
+        String text = field.getText().trim();
+        
+        if (text.isEmpty()) {
+            field.setBorder(createBorder(NEUTRAL_BORDER));
+            updateWeightageStatus();
+            return;
+        }
+        
+        boolean isValid = false;
+        
+        if (col == 0) { // Assignment column
+            isValid = text.matches(ASSIGNMENT_PATTERN);
+        } else { // Grade or Weightage columns
+            isValid = text.matches(NUMERIC_PATTERN) && 
+                     !text.equals(".") && 
+                     Double.parseDouble(text) >= 0;
+        }
+        
+        if (isValid) {
+            field.setBorder(createBorder(VALID_BORDER));
+        } else {
+            field.setBorder(createBorder(INVALID_BORDER));
+            field.setText("");
+        }
+        
+        updateWeightageStatus();
+    }
+    
+    /**
+     * Updates the weightage status message
+     */
+    private void updateWeightageStatus() {
+        WeightageStatus status = checkWeightageStatus();
+        
+        switch (status) {
+            case PERFECT:
+                resultsLabel.setText("Ready to calculate!");
+                resultsLabel.setTextFill(Color.BLACK);
+                break;
+            case INCOMPLETE:
+                resultsLabel.setText("Please enter details to calculate");
+                resultsLabel.setTextFill(Color.BLACK);
+                break;
+            case UNDER_100:
+                resultsLabel.setText("Weightage does not add up to 100%. Please check.");
+                resultsLabel.setTextFill(Color.RED);
+                break;
+            case OVER_100:
+                resultsLabel.setText("Weightage exceeds 100%. Please check.");
+                resultsLabel.setTextFill(Color.RED);
+                break;
+        }
+    }
+    
+    /**
+     * Adds calculate and clear buttons to the layout
+     */
+    private void addButtons(GridPane root) {
+        Button calculateBtn = createButton("Calculate", this::calculateGrade);
+        Button clearBtn = createButton("Clear", this::clearAllFields);
+        
+        root.add(calculateBtn, 0, 14);
+        root.add(clearBtn, 1, 14);
+    }
+    
+    /**
+     * Adds the results label to the layout
+     */
+    private void addResultsLabel(GridPane root) {
+        resultsLabel.setPadding(new Insets(5));
+        GridPane.setHalignment(resultsLabel, HPos.LEFT);
+        root.add(resultsLabel, 0, 16, COLUMNS, 1);
+    }
+    
+    /**
+     * Handles the calculate button action
+     */
+    private void calculateGrade() {
+        if (!isReadyToCalculate()) {
+            resultsLabel.setText("Please complete all assignment details before calculating.");
+            resultsLabel.setTextFill(Color.RED);
+            return;
+        }
+        
+        double totalScore = calculateWeightedScore();
+        String letterGrade = getLetterGrade(totalScore);
+        
+        resultsLabel.setText(String.format("Final Grade: %.2f%% (%s)", totalScore, letterGrade));
+        resultsLabel.setTextFill(Color.DARKGREEN);
+    }
+    
+    /**
+     * Handles the clear button action
+     */
+    private void clearAllFields() {
+        for (int col = 0; col < COLUMNS; col++) {
+            for (int row = 0; row < MAX_ASSIGNMENTS; row++) {
+                textFields[col][row].setText("");
+                textFields[col][row].setBorder(createBorder(NEUTRAL_BORDER));
+            }
+        }
+        resultsLabel.setText("Please enter details to calculate");
+        resultsLabel.setTextFill(Color.BLACK);
+    }
 
-    private int checkTotalWeightage(TextField[][] tFields){
-        double totalWeightage = 0;
-        for (int i = 0; i < 3; i++) { //columns
-            for (int j = 0; j < 5; j++) { //rows
-                if(tFields[i][j].getId().contains("assignment") && !tFields[i][j].getText().isEmpty() && !tFields[2][j].getText().isEmpty() ) {
-                    totalWeightage += Double.parseDouble(tFields[2][j].getText());
+    
+    // ===============================
+    // Helper Methods
+    // ===============================
+    
+    /**
+     * Checks if all required fields are completed for calculation
+     */
+    private boolean isReadyToCalculate() {
+        boolean hasAtLeastOneAssignment = false;
+        
+        for (int row = 0; row < MAX_ASSIGNMENTS; row++) {
+            String assignment = textFields[0][row].getText().trim();
+            String grade = textFields[1][row].getText().trim();
+            String weightage = textFields[2][row].getText().trim();
+            
+            if (!assignment.isEmpty()) {
+                hasAtLeastOneAssignment = true;
+                // If assignment is filled, grade and weightage must also be filled
+                if (grade.isEmpty() || weightage.isEmpty()) {
+                    return false;
                 }
             }
         }
-        if(totalWeightage < 100.0){
-            return 2; // total weightage doesn't add up to 100.
-        }else if(totalWeightage == 100.0){
-            return 1; // total weightage is exactly 100 percent.
-        }else{
-            return 3; // total weightage exceeds 100
+        
+        return hasAtLeastOneAssignment && checkWeightageStatus() == WeightageStatus.PERFECT;
+    }
+    
+    /**
+     * Calculates the weighted score based on filled assignments
+     */
+    private double calculateWeightedScore() {
+        double totalScore = 0.0;
+        
+        for (int row = 0; row < MAX_ASSIGNMENTS; row++) {
+            String assignment = textFields[0][row].getText().trim();
+            
+            if (!assignment.isEmpty()) {
+                double grade = Double.parseDouble(textFields[1][row].getText().trim());
+                double weightage = Double.parseDouble(textFields[2][row].getText().trim());
+                totalScore += grade * (weightage / 100.0);
+            }
+        }
+        
+        return totalScore;
+    }
+    
+    /**
+     * Checks the current weightage status
+     */
+    private WeightageStatus checkWeightageStatus() {
+        double totalWeightage = 0.0;
+        boolean hasAssignments = false;
+        boolean hasIncompleteEntries = false;
+        
+        for (int row = 0; row < MAX_ASSIGNMENTS; row++) {
+            String assignment = textFields[0][row].getText().trim();
+            String weightage = textFields[2][row].getText().trim();
+            
+            if (!assignment.isEmpty()) {
+                hasAssignments = true;
+                if (weightage.isEmpty()) {
+                    hasIncompleteEntries = true;
+                } else {
+                    totalWeightage += Double.parseDouble(weightage);
+                }
+            }
+        }
+        
+        if (!hasAssignments || hasIncompleteEntries) {
+            return WeightageStatus.INCOMPLETE;
+        }
+        
+        if (Math.abs(totalWeightage - PERFECT_WEIGHTAGE) < 0.01) {
+            return WeightageStatus.PERFECT;
+        } else if (totalWeightage < PERFECT_WEIGHTAGE) {
+            return WeightageStatus.UNDER_100;
+        } else {
+            return WeightageStatus.OVER_100;
         }
     }
-    private String getTextFieldPromptText(int i, int j) {
-
-        switch(i){ //for each column 1, 2, 3
-            case 0 : return "Assignment Type " + (j+1); // add a prompt text for Assignments. E.g.: Assignment 4
-            case 1 : return "Grade " + (j+1); // add a prompt text for Grade. E.g.: Grade 4
-            case 2 : return "Weightage " + (j+1); // add a prompt text for Weightage. E.g.: Weightage 4
-            default : return "";
-        }
-
+    
+    /**
+     * Converts numeric score to letter grade
+     */
+    private String getLetterGrade(double score) {
+        if (score >= 96) return "A";
+        if (score >= 90) return "A-";
+        if (score >= 85) return "B";
+        if (score >= 80) return "B-";
+        if (score >= 75) return "C";
+        if (score >= 70) return "C-";
+        if (score >= 60) return "D";
+        return "F";
     }
-    private String getTextFieldIDString(int i, int j) {
-
-        switch(i){
-            case 0 : return "assignment" + (j+1); //setting ID for text field.. E.g.: assignment1, assignment2.
-            case 1 : return "grade" + (j+1); //setting ID for text field.. E.g.: grade1, grade2.
-            case 2 : return "weightage" + (j+1); // setting ID for text field. E.g.: weightage1, weightage2.
-            default : return "";
-        }
-
+    
+    /**
+     * Creates a border with the specified color
+     */
+    private Border createBorder(Color color) {
+        return new Border(new BorderStroke(color, BorderStrokeStyle.SOLID, 
+                                         new CornerRadii(2), BorderWidths.DEFAULT));
     }
+    
+    /**
+     * Creates a label with standard padding
+     */
+    private Label createLabel(String text) {
+        Label label = new Label(text);
+        label.setPadding(new Insets(5));
+        return label;
+    }
+    
+    /**
+     * Creates a button with the specified text and action
+     */
+    private Button createButton(String text, Runnable action) {
+        Button button = new Button(text);
+        button.setPadding(new Insets(5));
+        button.setOnAction(e -> action.run());
+        return button;
+    }
+    
+    /**
+     * Generates prompt text for text fields
+     */
+    private String getPromptText(int col, int row) {
+        String[] prefixes = {"Assignment Type", "Grade", "Weightage"};
+        return prefixes[col] + " " + (row + 1);
+    }
+    
+    /**
+     * Generates ID for text fields
+     */
+    private String getFieldId(int col, int row) {
+        String[] prefixes = {"assignment", "grade", "weightage"};
+        return prefixes[col] + (row + 1);
+    }
+    
+    // ===============================
+    // Enums and Inner Classes
+    // ===============================
+    
+    /**
+     * Represents the status of weightage validation
+     */
+    private enum WeightageStatus {
+        PERFECT,     // Exactly 100%
+        INCOMPLETE,  // Missing assignments or weightages
+        UNDER_100,   // Less than 100%
+        OVER_100     // More than 100%
+    }
+    
     public static void main(String[] args) {
         launch();
     }
